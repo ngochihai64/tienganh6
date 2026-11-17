@@ -29,6 +29,8 @@ h2{margin:0 0 4px;font-size:1.45rem}h3{margin:20px 0 8px;color:var(--dk);font-si
 table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid var(--line);padding:9px 8px;text-align:left;vertical-align:middle}th{background:var(--bg2);font-size:.85rem;color:var(--muted)}
 td.en{font-weight:700;color:var(--dk)}td.pr{color:#5a6285;font-style:italic}
 .sp{border:1px solid var(--bd2);background:var(--bg2);color:#3446a8;border-radius:10px;padding:8px 20px;font-size:1.05rem;font-weight:800;margin-right:6px}
+.sp,.btn.pl{padding:5px 14px!important;font-size:.92rem!important;border-radius:8px!important;min-width:0!important;margin-right:4px}
+.card table td:last-child{white-space:nowrap}
 .spOn,.btn.alt.spOn{background:#d33!important;color:#fff!important;border-color:#d33!important}
 .sp:hover{background:var(--pale)}
 .search{width:100%;border:1px solid var(--line);border-radius:12px;padding:10px 13px;margin-bottom:12px}
@@ -1511,7 +1513,7 @@ function prepQs(qs,take){
  if(take&&take<a.length){const drop=new Set(sh(a.map((_,i)=>i)).slice(0,a.length-take));a=a.filter((_,i)=>!drop.has(i))}
  return a;
 }
-const passItem=(p,kind,take)=>({t:'passage',kind,p:{title:p.title,text:p.text},qs:orderQs(prepQs(p.qs,take),p),plays:0,ans:{},sub:false});
+const passItem=(p,kind,take)=>{const it={t:'passage',kind,p:{title:p.title,text:p.text},qs:orderQs(prepQs(p.qs,take),p),plays:0,ans:{},sub:false};return(typeof _rd==='function')?_rd(it,p,kind):it};
 function listenQs(id,n){
  const pool=words(id),sp=id?SENT.filter(x=>x[0]===id):SENT,out=[];
  const nS=Math.min(sp.length,Math.round(n*.35));
@@ -1537,7 +1539,7 @@ function makeAll(id){
  else lis=[{t:'passage',kind:'listenq',p:{title:'Nghe và chọn đáp án',text:''},qs:listenQs(id,19),plays:0,ans:{},sub:false}];
  return[passItem(r1,'read'),passItem(r2,'read',9),essayFor(id),speak3(id),...lis];
 }
-const totalOf=l=>l.reduce((a,q)=>a+(q.t==='passage'?q.qs.length:1),0);
+const totalOf=l=>l.reduce((a,q)=>a+(q.t==='passage'?q.qs.length:(q.t==='speaking3'&&q.parts?q.parts.length:1)),0);
 delete KN.mix;tk='listen';
 const KDESC={listen:'Ở chế độ Nâng cao: chọn một <b>chủ đề</b>, mỗi chủ đề có <b>5 bài nghe khác nhau</b> (mỗi bài 15 câu Đúng/Sai và trắc nghiệm, nghe tối đa 2 lần, có giọng Anh và Mỹ). Chế độ Bình thường: <b>15 câu</b> theo Unit gồm 5 câu nghe từ, 5 câu nghe bài, 5 câu nghe điền từ.',reading:'Bài đọc dài, mỗi bài 10 câu hỏi (Đúng/Sai và chọn đáp án).',speak:'Nghe mẫu và đọc to; có thể nói vào micro hoặc tự đánh giá.',write:'Viết từ, câu hoặc đoạn văn theo chủ đề, có gợi ý và tiêu chí tự đánh giá.',all:'Bài tổng hợp <b>40 câu</b>: 19 câu đọc + 1 bài viết + 1 phần đọc to (3 mục ngẫu nhiên trong Unit đã chọn) + 19 câu nghe.'};
 viewTestMenu=function(){
@@ -1565,7 +1567,7 @@ function viewNew(){
   body=`<h3>${q.p.title}</h3>`+
    (lis?`<div class="muted">Lượt nghe: <b id="pl">${q.plays}</b>/2 — nghe bài rồi trả lời các câu hỏi. Văn bản sẽ hiện sau khi nộp bài.</div><div class="row"><button class="btn alt pl" onclick="playP('en-US')">US</button><button class="btn alt pl" onclick="playP('en-GB')">GB</button><button class="btn alt" onclick="stopSpeak()">⏹ Dừng</button></div><div id="ptext" class="box" style="display:none;line-height:1.8">${q.p.text}</div>`
    :lq?`<div class="muted">Bấm US hoặc GB để nghe rồi chọn đáp án đúng cho từng câu.</div>`
-   :`<div class="row" style="justify-content:flex-start"><button class="btn alt" onclick="playRead('en-US')">US</button><button class="btn alt" onclick="playRead('en-GB')">GB</button></div>${glossBox(q.p)}<div class="box" style="line-height:1.8;white-space:pre-line">${hl(q.p.text,GL[q.p.title])}</div>`)+
+   :`${glossBox(q.p)}<div class="box" style="line-height:1.8;white-space:pre-line">${hl(q.p.text,GL[q.p.title])}</div>`)+
    q.qs.map((x,i)=>`<div class="box" id="q${i}"><b>${i+1}. ${x.text}</b>${x.audio?` ${spk2(x.audio)}`:''}`+(x.k==='tf'?`<div class="chips"><button class="chip tf" onclick="pAns(${i},'True',this)">True</button><button class="chip tf" onclick="pAns(${i},'False',this)">False</button></div>`:x.opts.map((o,k)=>`<button class="opt" onclick="pAns(${i},${k},this)">${AB[k]}. ${o}</button>`).join(''))+`<div class="muted" id="x${i}"></div></div>`).join('')+
    `<button class="btn" id="psub" onclick="submitP()">Nộp bài (${q.qs.length} câu)</button><div id="pfb"></div>`;
  }else if(q.t==='essay'){
@@ -1574,7 +1576,7 @@ function viewNew(){
   sec='Nói';if(q.parts)body=`<h3>🗣️ Phần nói: 3 nội dung ngẫu nhiên</h3><div class="muted">Nói thành tiếng 1–2 phút cho mỗi nội dung, rồi tự đánh giá độ trôi chảy, từ vựng, ngữ pháp và phát âm.</div>`+q.parts.map((l,i)=>`<div class="box"><b>${i+1}. ${l.title}</b><div>${l.prompt}</div><div class="row" style="justify-content:flex-start">${spk2(l.prompt)}</div></div>`).join('')+`<div class="row"><button class="btn alt" onclick="submitSpeak(1)">✅ Tôi đã nói tốt</button><button class="btn alt" onclick="submitSpeak(0)">🔁 Cần luyện thêm</button></div><div id="pfb"></div>`;else body=`<h3>🗣️ Đọc to 3 mục ngẫu nhiên</h3><div class="muted">Nghe mẫu rồi đọc to từng mục. Có thể bấm 🎤 để máy chấm, hoặc tự đánh giá ở cuối.</div>`+q.lines.map((l,i)=>`<div class="box"><b style="font-size:1.15rem;color:var(--dk)">${i+1}. ${l.en}</b><div class="muted">${l.vi}</div><div class="row" style="justify-content:flex-start">${spk2(l.en)}<button class="btn alt" onclick="micLine(${i})">🎤 Nói</button></div><div class="muted" id="mn${i}"></div></div>`).join('')+`<div class="row"><button class="btn alt" onclick="submitSpeak(1)">✅ Tôi đã đọc tốt</button><button class="btn alt" onclick="submitSpeak(0)">🔁 Cần luyện thêm</button></div><div id="pfb"></div>`;
  }
  const lab=T.topic?[T.topic.en,T.topic.vi].filter(Boolean).join(' · '):(T.id?'Unit '+T.id:'Tổng hợp');
- app.innerHTML=`<div class="card"><div style="display:flex;justify-content:space-between"><span class="pill">${lab}${T.aggregate?' · 40 câu':''} · ${sec}</span><span class="muted">Phần ${T.i+1}/${n} · Điểm ${T.score}</span></div><div class="bar"><i style="width:${T.i/n*100}%"></i></div>${body}</div>`;
+ app.innerHTML=`<div class="card"><div style="display:flex;justify-content:space-between"><span class="pill">${lab}${T.aggregate?' · '+totalOf(T.list)+' câu':''} · ${sec}</span><span class="muted">Phần ${T.i+1}/${n} · Điểm ${T.score}</span></div><div class="bar"><i style="width:${T.i/n*100}%"></i></div>${body}</div>`;
  window.scrollTo(0,0);
 }
 function playP(lang){const q=T.list[T.i];if(q.plays>=2)return;q.plays++;$('#pl').textContent=q.plays;_radio=(mode==='advanced');speak(q.p.text,lang);fxStart(mode==='advanced'&&CROWD.has(q.p.title))}
@@ -1608,7 +1610,7 @@ function micLine(i){
  try{r.start()}catch(e){note.textContent='Không bật được micro.'}
 }
 function submitSpeak(v){
- const q=T.list[T.i];if(q.sub)return;q.sub=true;const ok=v||(q.lines&&q.lines.every(l=>l.ok));if(ok)T.score++;else T.wrong.push({q:'🗣️ '+(q.lines?'Đọc to: '+q.lines.map(l=>l.en).join(' / '):'Phần nói: '+q.parts.map(l=>l.title).join(' / ')),a:'Luyện đọc lại',e:''});
+ const q=T.list[T.i];if(q.sub)return;q.sub=true;const ok=v||(q.lines&&q.lines.every(l=>l.ok));if(ok)T.score+=(q.parts?q.parts.length:1);else T.wrong.push({q:'🗣️ '+(q.lines?'Đọc to: '+q.lines.map(l=>l.en).join(' / '):'Phần nói: '+q.parts.map(l=>l.title).join(' / ')),a:'Luyện đọc lại',e:''});
  $('#pfb').innerHTML=`<div class="fb ${ok?'ok':'bad'}">${ok?'✅ Tốt lắm!':'🔁 Hãy luyện thêm và thử lại.'}</div>${nextBtn()}`;
 }
 viewResult=function(){
@@ -2005,7 +2007,8 @@ startTest=function(id){
  if(tk==='write'){const x=pk(tp.write);T={...base,k:'write',list:[{t:'essay',title:x[0],prompt:x[1]}]};viewQ();return}
  if(tk==='speak'){const x=sh(tp.speak).slice(0,3);T={...base,k:'speak',list:[{t:'speaking3',parts:x.map(y=>({title:y[0],prompt:y[1]}))}]};viewQ();return}
  const c=sh(tp.ps),LL=sh(tp.list||[tp.sp,c[0]]),r2=pickRead(true),x=pk(tp.write),sp=sh(tp.speak).slice(0,3);
- T={...base,k:'all',aggregate:true,list:[passItem(c[1],'read',10),passItem(r2,'read',9),{t:'essay',title:x[0],prompt:x[1]},{t:'speaking3',parts:sp.map(y=>({title:y[0],prompt:y[1]}))},passItem(LL[0],'listen',10),passItem(LL[1],'listen',9)]};
+ const LS=sh(tp.list||[tp.sp]).slice(0,4),RS=[...sh(tp.ps).slice(0,3),r2],mk=(p,kind,n,part)=>{const it=passItem(p,kind,n);it.part=part;return it};
+ T={...base,k:'all',aggregate:true,list:[mk(LS[0],'listen',15,'Nghe · Bài 1 (15 câu)'),mk(LS[1],'listen',10,'Nghe · Bài 2 (10 câu)'),mk(LS[2],'listen',5,'Nghe · Bài 3 (5 câu)'),mk(LS[3],'listen',5,'Nghe · Bài 4 (5 câu)'),mk(RS[0],'read',12,'Đọc · Bài 1 (12 câu)'),mk(RS[1],'read',12,'Đọc · Bài 2 (12 câu)'),mk(RS[2],'read',6,'Đọc · Bài 3 (6 câu)'),mk(RS[3],'read',6,'Đọc · Bài 4 (6 câu)'),{t:'speaking3',part:'Nói (3 câu)',parts:sp.map(y=>({title:y[0],prompt:y[1]}))},{t:'essay',part:'Viết (1 câu)',title:x[0],prompt:x[1]}]};
  viewQ();
 };
 
@@ -2018,7 +2021,7 @@ function sayNow(t,l,rate){
  const s=window.speechSynthesis;if(!s)return;
  try{if(s.speaking||s.pending)s.cancel();if(s.paused)s.resume()}catch(e){}
  const parts=(String(t).match(/[^.!?\n]+[.!?]*/g)||[String(t)]).map(x=>x.trim()).filter(Boolean);
- setTimeout(()=>{try{loadV();parts.forEach(c=>{const u=new SpeechSynthesisUtterance(c);u.lang=l||'en-US';u.rate=rate;u.volume=1;const v=vFor(u.lang);if(v)u.voice=v;s.speak(u)})}catch(e){}},90);
+ setTimeout(()=>{try{loadV();parts.forEach(c=>{const u=new SpeechSynthesisUtterance(c);u.lang=l||'en-US';u.rate=rate;u.volume=1;const v=vFor(u.lang);if(v){u.voice=v;u.lang=String(v.lang).replace('_','-')}s.speak(u)})}catch(e){}},90);
 }
 speak=function(t,l){sayNow(t,l,.88)};
 speakToggle=function(t,l,b){const n=(Number(b&&b.dataset.plays)||0)+1;if(b)b.dataset.plays=n;sayNow(t,l,n%2===0?.55:.9)};
@@ -2028,24 +2031,30 @@ speakToggle=function(t,l,b){const n=(Number(b&&b.dataset.plays)||0)+1;if(b)b.dat
 const GOOD={'en-us':['Ava','Allison','Samantha','Zoe','Evan','Nicky','Aria','Jenny','Guy','Google US English','Joanna','Matthew'],'en-gb':['Serena','Daniel','Kate','Oliver','Sonia','Ryan','Libby','Google UK English Female','Google UK English Male','Arthur','Amy','Brian']};
 function vScore(v,l){const L=l.toLowerCase().replace('_','-'),vl=v.lang.toLowerCase().replace('_','-'),n=v.name;let s=0;
  if(vl===L)s+=20;else if(vl.slice(0,2)===L.slice(0,2))s+=2;else return -99;
- if(/natural|neural|online/i.test(n))s+=14;if(/premium|enhanced|siri/i.test(n))s+=12;if(/google/i.test(n))s+=6;
+ if(/natural|neural|online/i.test(n))s+=14;if(/premium|enhanced|siri/i.test(n))s+=12;if(/google/i.test(n))s+=6;if(/network/i.test(n))s+=5;if(/en-gb-x-(gba|gbb|gbc|gbd|rjs)|en-us-x-(iol|iom|tpd|tpf|sfg|iob|ioc)/i.test(n))s+=4;
  const g=GOOD[L]||[];const ix=g.findIndex(x=>n.toLowerCase().includes(x.toLowerCase()));if(ix>=0)s+=8-Math.min(ix,6)*.5;
  if(/compact|eloquence|novelty|whisper|bubbles|albert|bad news|bahh|boing|cellos|deranged|good news|hysterical|junior|organ|trinoids|zarvox|fred|ralph|kathy|superstar|wobble/i.test(n))s-=30;
  if(v.localService)s+=1;return s}
-vFor=function(l){let best=null,bs=-50;(_voices||[]).forEach(v=>{const s=vScore(v,l);if(s>bs){bs=s;best=v}});return best};
+vFor=function(l){const L=String(l).toLowerCase().replace('_','-');let best=null,bs=-50,ex=(_voices||[]).filter(v=>v.lang.toLowerCase().replace('_','-')===L);const pool=ex.length?ex:(L==='en-gb'?[]:(_voices||[]));pool.forEach(v=>{const s=vScore(v,l);if(s>bs){bs=s;best=v}});return best};
+function showVInfo(){try{loadV();const u=vFor('en-US'),g=vFor('en-GB');let d=document.getElementById('vinfo');if(!d){const a=document.getElementById('app')||app;a.insertAdjacentHTML('afterend','<div id="vinfo" class="muted" style="font-size:.8rem;text-align:center;margin:12px 8px"></div>');d=document.getElementById('vinfo')}
+ let t='🔊 Giọng US: <b>'+(u?u.name:'mặc định')+'</b> · GB: <b>'+(g?g.name:'chưa có')+'</b>';
+ if(!g||(u&&g&&u.name===g.name))t+=/Android/i.test(navigator.userAgent)?'<br>⚠ Máy chưa có giọng Anh-Anh nên GB giống US. Android: Cài đặt → Hệ thống (hoặc Quản lý chung) → Ngôn ngữ → Chuyển văn bản thành giọng nói → công cụ Google → Cài đặt → Cài đặt dữ liệu giọng nói → Tiếng Anh (Vương quốc Anh), tải về, rồi đóng hẳn Chrome và mở lại.':'<br>⚠ Máy chưa có giọng Anh-Anh nên GB giống US. iPhone: Cài đặt → Trợ năng → Nội dung đã đọc → Giọng nói → Tiếng Anh → Vương quốc Anh, tải giọng Daniel hoặc Serena, rồi mở lại trang.';
+ d.innerHTML=t}catch(e){}}
+try{window.speechSynthesis.addEventListener('voiceschanged',showVInfo)}catch(e){}
+setTimeout(showVInfo,400);setTimeout(showVInfo,2000);
 let _tok=0,_pend=0,_act=null,_playBtn=null;
-function restoreBtn(){if(_playBtn){try{_playBtn.innerHTML=_playBtn._orig;_playBtn.classList.remove('spOn')}catch(e){}_playBtn=null}}
+function restoreBtn(){if(_playBtn){try{_playBtn.innerHTML=_playBtn._orig;_playBtn.style.width='';_playBtn.style.minWidth='';_playBtn.classList.remove('spOn')}catch(e){}_playBtn=null}}
 function showStop(on){if(!on){restoreBtn();fxStop()}}
 document.addEventListener('click',function(e){const b=e.target.closest&&e.target.closest('button');if(!b)return;if(b.classList.contains('spOn')){e.stopPropagation();e.preventDefault();stopSpeak();return}const oc=b.getAttribute('onclick')||'';if(/speak\(|speakToggle\(|playP\(|playRead\(/.test(oc)){_act=b;setTimeout(()=>{_act=null},0)}},true);
 function stopSpeak(){_tok++;_pend=0;try{window.speechSynthesis.cancel()}catch(e){}showStop(false)}
 const _sa2=stopAll;stopAll=function(){stopSpeak();_sa2()};
 sayNow=function(t,l,rate){
- const s=window.speechSynthesis;if(!s)return;const my=++_tok;_pend=0;const radio=_radio;_radio=false;restoreBtn();killFx();if(_act){_playBtn=_act;_act._orig=_act.innerHTML;_act.innerHTML='■ '+_act.textContent.trim();_act.classList.add('spOn');_act=null}
+ const s=window.speechSynthesis;if(!s)return;const my=++_tok;_pend=0;const radio=_radio;_radio=false;restoreBtn();killFx();if(_act){_playBtn=_act;_act._orig=_act.innerHTML;_act.style.width=_act.offsetWidth+'px';_act.style.minWidth=_act.offsetWidth+'px';_act.style.textAlign='center';_act.innerHTML='■';_act.classList.add('spOn');_act=null}
  if(radio){radioPlay(t,l,rate,my);return}
  try{if(s.speaking||s.pending)s.cancel();if(s.paused)s.resume()}catch(e){}
  const parts=(String(t).replace(/\s*\n+\s*/g,'. ').match(/[^.!?;]+[.!?;]*/g)||[String(t)]).map(x=>x.trim()).filter(Boolean);
  setTimeout(()=>{if(my!==_tok)return;try{loadV();const v=vFor(l||'en-US');
-  parts.forEach(c=>{const g=radio?glitch(c,rate):{t:c,r:rate,v:1};const u=new SpeechSynthesisUtterance(g.t);u.lang=l||'en-US';u.rate=g.r;u.pitch=1;u.volume=g.v;if(v)u.voice=v;_pend++;
+  parts.forEach(c=>{const g=radio?glitch(c,rate):{t:c,r:rate,v:1};const u=new SpeechSynthesisUtterance(g.t);u.lang=l||'en-US';u.rate=g.r;u.pitch=1;u.volume=g.v;if(v){u.voice=v;u.lang=String(v.lang).replace('_','-')}_pend++;
    const done=()=>{if(my!==_tok)return;_pend=Math.max(0,_pend-1);if(!_pend)showStop(false)};u.onend=done;u.onerror=done;s.speak(u)});
   }catch(e){}},120);
 };
@@ -2178,7 +2187,7 @@ function radioItems(text,rate){
 function radioPlay(t,l,rate,my){
  const s=window.speechSynthesis;loadV();const v=vFor(l||'en-US'),items=radioItems(t,rate);let i=0;_pend=1;
  const next=()=>{if(my!==_tok)return;if(i>=items.length){_pend=0;showStop(false);return}
-  const it=items[i++],u=new SpeechSynthesisUtterance(it.t);u.lang=l||'en-US';u.rate=it.r;u.pitch=it.p;u.volume=it.v;if(v)u.voice=v;
+  const it=items[i++],u=new SpeechSynthesisUtterance(it.t);u.lang=l||'en-US';u.rate=it.r;u.pitch=it.p;u.volume=it.v;if(v){u.voice=v;u.lang=String(v.lang).replace('_','-')}
   const go=()=>setTimeout(next,it.pause||0);u.onend=go;u.onerror=go;try{s.speak(u)}catch(e){go()}};
  setTimeout(()=>{if(my===_tok)next()},150);
 }
@@ -2239,16 +2248,16 @@ radioItems=function(text,rate){
  let drift=1,lastSlur=false;
  sents.forEach((raw,idx)=>{
   let c=raw.trim();if(!c)return;const lc=c.toLowerCase();
-  drift=Math.max(.93,Math.min(1.05,drift+rnd(-.02,.02)));
-  let r=rate*drift,p=1+rnd(-.03,.03),v=1,pause=rnd(450,720);
-  if(/!|thrilled|amazed|surprise|happiest|spectacular|delighted|best thing|perfectly|laughed|cheer/.test(lc)){p=rnd(1.07,1.13);r*=1.04;pause=rnd(330,520)}
-  else if(/upset|lonely|homesick|exhausted|sadly|unfortunately|missed|disappointed|miss |sadness|goodbye/.test(lc)){p=rnd(.9,.95);r*=.9;pause+=rnd(200,380)}
+  drift=Math.max(1.06,Math.min(1.16,drift+rnd(-.02,.02)));
+  let r=Math.min(rate*drift,1.5),p=1+rnd(-.03,.03),v=1,pause=rnd(300,500);
+  if(/!|thrilled|amazed|surprise|happiest|spectacular|delighted|best thing|perfectly|laughed|cheer/.test(lc)){p=rnd(1.07,1.13);r*=1.04;pause=rnd(250,400)}
+  else if(/upset|lonely|homesick|exhausted|sadly|unfortunately|missed|disappointed|miss |sadness|goodbye/.test(lc)){p=rnd(.9,.95);r*=.9;pause+=rnd(120,240)}
   else if(/nervous|scared|afraid|worried|dangerous|dizzy|terrified|angry|furious|shaky|racing/.test(lc)){r*=1.06;p=rnd(1.03,1.08)}
   const isQ=/\?\s*$/.test(c);
   let lead='';
-  if(idx>0&&Math.random()<.1)lead=pickA(['Well, ','So, ','Okay, ','You know, ','Right, ']);
-  else if(idx>0&&Math.random()<.05)out.push({t:pickA(['Hmm...','Um...']),r:r*.88,p:p*.96,v:.9,pause:rnd(220,380)});
-  const mumble=Math.random()<.04;if(mumble){r=Math.min(r*1.12,1.4);v=.6}
+  if(idx>0&&Math.random()<.03)lead=pickA(['Well, ','So, ','Okay, ','You know, ','Right, ']);
+  else if(idx>0&&Math.random()<.015)out.push({t:pickA(['Hmm...','Um...']),r:r*.88,p:p*.96,v:.9,pause:rnd(220,380)});
+  const mumble=Math.random()<.01;if(mumble){r=Math.min(r*1.12,1.4);v=.6}
   let cl=c.replace(/,\s+/g,',|').replace(/\s+(but|because|though|while|which|until)\s/gi,'|$1 ').split('|').map(x=>x.trim()).filter(Boolean);
   for(let i=0;i<cl.length-1;){if(cl[i].split(' ').length<3){cl[i+1]=cl[i]+' '+cl[i+1];cl.splice(i,1)}else i++}
   if(cl.length>1&&cl[cl.length-1].split(' ').length<2){cl[cl.length-2]+=' '+cl.pop()}
@@ -2256,8 +2265,8 @@ radioItems=function(text,rate){
   cl.forEach((x,k)=>{
    const last=k===cl.length-1,first=k===0;
    let pp=p*(first?1.025:1)*(last?(isQ?1.12:.94):1),rr=r*(last?.94:1.0),txt=(first?lead:'')+(first&&lead&&!/^I\b/.test(x)?x[0].toLowerCase()+x.slice(1):x);
-   const gap=last?pause:rnd(150,300),w=x.split(' ');
-   if(!slurDone&&!lastSlur&&!last&&w.length>=5&&Math.random()<.28){
+   const gap=last?pause:rnd(80,170),w=x.split(' ');
+   if(!slurDone&&!lastSlur&&!last&&w.length>=5&&Math.random()<.15){
     const j=2+Math.floor(Math.random()*(w.length-4));
     const pre=w.slice(0,j).join(' '),sg=w.slice(j,j+2).join(' '),post=w.slice(j+2).join(' ');
     out.push({t:(first?lead:'')+(first&&lead&&!/^I\b/.test(pre)?pre[0].toLowerCase()+pre.slice(1):pre),r:Math.min(rr*1.03,1.5),p:pp,v,pause:0});
@@ -2273,5 +2282,157 @@ radioItems=function(text,rate){
 const NORM_L=[{"title": "My family", "text": "There are six people in my family, and we live in a flat on the third floor. My grandfather lives with us, and he is seventy-two years old and retired. My father works at a bank, while my mother works part-time in a bookshop. I have a younger sister who is nine and an older brother who studies at university. Every evening we have dinner at half past six, and nobody is allowed to use a phone at the table. At weekends my brother cooks, and he makes the best fried rice in the family.", "qs": [["mc", "Which floor do they live on?", ["The third floor", "The second floor", "The sixth floor", "The ground floor"]], ["mc", "How old is the grandfather?", ["Seventy-two", "Sixty-two", "Seventy-five", "Eighty-two"]], ["mc", "Where does the writer's father work?", ["At a bank", "In a bookshop", "At a school", "In a hospital"]], ["tf", "The family has dinner at half past seven.", "False"], ["mc", "Who cooks at weekends?", ["The brother", "The mother", "The father", "The grandfather"]]], "ordered": true}, {"title": "A school day", "text": "My school day starts at half past seven, but I leave home at seven because the bus is often late. We have five lessons in the morning and two in the afternoon. On Tuesdays we have a double lesson of science, which I find difficult but interesting. At break I usually buy a sandwich and a bottle of water in the canteen. After school I stay for an hour in the library to do my homework before the bus comes at five. I get home at about half past five, tired but happy.", "qs": [["mc", "What time does the writer leave home?", ["At seven", "At half past seven", "At six", "At half past six"]], ["mc", "How many lessons are there in the morning?", ["Five", "Two", "Seven", "Four"]], ["tf", "The writer finds science easy.", "False"], ["mc", "What does the writer buy at break?", ["A sandwich and a bottle of water", "A sandwich and some juice", "Noodles and a bottle of water", "A cake and some milk"]], ["mc", "When does the writer get home?", ["About half past five", "About five", "About six", "About half past six"]]], "ordered": true}, {"title": "A new bedroom", "text": "I moved to a new house last month, and now I have my own bedroom. It is quite big, with two windows and a blue carpet. My bed is against the wall, opposite the door. Above the bed there are two shelves with my favourite books. I put my computer on a desk near the window so I can see the garden. The only problem is the wardrobe, which is too small for all my clothes.", "qs": [["mc", "When did the writer move?", ["Last month", "Last week", "Last year", "Two months ago"]], ["mc", "What colour is the carpet?", ["Blue", "Green", "Grey", "Brown"]], ["mc", "Where is the bed?", ["Against the wall, opposite the door", "Next to the window", "Under the shelves", "In the corner"]], ["mc", "Where is the computer?", ["On a desk near the window", "On the bed", "On a shelf", "In the wardrobe"]], ["tf", "The wardrobe is big enough for all the clothes.", "False"]], "ordered": true}, {"title": "Last Saturday", "text": "Last Saturday I went to the market with my aunt. We left at eight o'clock and took the bus because the market is far from our house. My aunt bought vegetables and some fish, and I bought a small hat for my brother. It cost twenty thousand dong, which was cheaper than in the shop near my school. After that we had noodles for lunch, then went home by taxi because the bags were heavy. In the evening I was so tired that I went to bed at eight.", "qs": [["mc", "Who did the writer go with?", ["Her aunt", "Her mother", "Her sister", "Her friend"]], ["mc", "How did they go to the market?", ["By bus", "By taxi", "On foot", "By bike"]], ["mc", "What did the writer buy?", ["A small hat for her brother", "Vegetables and fish", "A bag for her aunt", "Noodles"]], ["tf", "The hat was more expensive than in the shop near school.", "False"], ["mc", "How did they go home?", ["By taxi", "By bus", "On foot", "By bike"]]], "ordered": true}, {"title": "Food and health", "text": "My mother says that I should eat more vegetables, so now we have a salad every day at lunch. I do not like tomatoes, but I eat cucumbers and carrots. For dinner we usually have soup with chicken or fish. We never eat fast food on school days, but on Sunday we sometimes go to a pizza restaurant. My favourite pizza has cheese and mushrooms, though my brother prefers ham and pineapple.", "qs": [["mc", "What does the writer's mother say?", ["Eat more vegetables", "Eat less rice", "Drink more milk", "Cook more fish"]], ["mc", "Which vegetable does the writer not like?", ["Tomatoes", "Cucumbers", "Carrots", "Mushrooms"]], ["mc", "What do they usually have for dinner?", ["Soup with chicken or fish", "A salad every day", "Pizza and cheese", "Rice and eggs"]], ["mc", "What is the writer's favourite pizza?", ["Cheese and mushrooms", "Ham and pineapple", "Cheese and ham", "Mushrooms and pineapple"]], ["tf", "The brother prefers cheese and mushrooms.", "False"]], "ordered": true}, {"title": "A rainy week", "text": "It has been rainy all week, so we could not play football outside. On Monday and Tuesday it rained heavily, and there was a strong wind on Wednesday. On Thursday the rain stopped, but it was still cold, only twelve degrees. The weather forecast says that Saturday will be sunny and warm, about twenty-five degrees. We are planning a picnic by the lake if the weather is good.", "qs": [["mc", "What could they not do this week?", ["Play football outside", "Go to school", "Watch TV", "Have lunch"]], ["mc", "On which day was there a strong wind?", ["Wednesday", "Monday", "Tuesday", "Thursday"]], ["tf", "Thursday was warm.", "False"], ["mc", "What will Saturday be like?", ["Sunny and warm", "Cold and rainy", "Windy and cloudy", "Cold but sunny"]], ["mc", "What are they planning?", ["A picnic by the lake", "A football match", "A trip to the beach", "A party at home"]]], "ordered": true}, {"title": "My cat", "text": "We have a cat called Mimi, and she came to our house two years ago. She was very small and thin when we found her in the garden. Now she is fat because she eats three times a day. She is afraid of dogs, but she loves to sit on my bed in the afternoon. My little brother wants a dog too, but my mother says that two animals are too many for a small flat.", "qs": [["mc", "When did the cat come to the house?", ["Two years ago", "Last year", "Two months ago", "Three years ago"]], ["mc", "Where did they find the cat?", ["In the garden", "In the street", "At school", "In the kitchen"]], ["mc", "How many times a day does she eat?", ["Three", "Two", "Four", "Once"]], ["mc", "What is the cat afraid of?", ["Dogs", "Water", "Children", "The dark"]], ["mc", "Why can the brother not have a dog?", ["The flat is too small for two animals", "Dogs are too expensive", "The father is afraid of dogs", "The cat would be angry"]]], "ordered": true}, {"title": "The school band", "text": "Lan is the leader of the school band, which has four members. They practise in the music room every Friday after school, from four to six. Last month they played at a charity concert and collected two hundred dollars for a local hospital. Now they are preparing for a bigger show at the end of the school year. Lan says the hardest part is finding time because everyone also has a lot of homework.", "qs": [["mc", "How many members does the band have?", ["Four", "Three", "Five", "Six"]], ["mc", "When do they practise?", ["Every Friday from four to six", "Every Thursday from four to six", "Every Friday from three to five", "Every Friday from four to seven"]], ["mc", "How much money did they collect?", ["Two hundred dollars", "Twenty dollars", "Two thousand dollars", "One hundred dollars"]], ["mc", "Who was the money for?", ["A local hospital", "A school", "The band", "A library"]], ["tf", "Lan says the easiest part is finding time.", "False"]], "ordered": true}];
 Object.assign(FIX,{"The family has dinner at half past seven.": "The family has dinner at half past six.", "The writer finds science easy.": "The writer finds science difficult but interesting.", "The wardrobe is big enough for all the clothes.": "The wardrobe is too small for all the writer's clothes.", "The hat was more expensive than in the shop near school.": "The hat was cheaper than in the shop near the writer's school.", "The brother prefers cheese and mushrooms.": "The brother prefers ham and pineapple.", "Thursday was warm.": "Thursday was cold, only twelve degrees.", "Lan says the easiest part is finding time.": "Lan says the hardest part is finding time."});
 const _pp0=playP;playP=function(lang){const q=T.list[T.i];if(mode!=='advanced'&&q.kind==='listen'){if(q.plays>=2)return;q.plays++;$('#pl').textContent=q.plays;_radio=false;killFx();speak(q.p.text,lang);return}_pp0(lang)};
+
+/* ===== ĐỌC LIỀN MẠCH: DẤU PHẨY DỪNG NGẮN, KHÔNG CHỜ ===== */
+radioItems=function(text,rate){
+ const sents=String(text).replace(/\s*\n+\s*/g,' ').match(/[^.!?]+[.!?]*/g)||[String(text)],out=[];
+ let drift=1.0;
+ sents.forEach((raw,idx)=>{
+  let c=raw.trim();if(!c)return;const lc=c.toLowerCase();
+  drift=Math.max(.97,Math.min(1.03,drift+rnd(-.01,.01)));
+  let r=rate*drift,p=1+rnd(-.03,.03),v=1;
+  if(/!|thrilled|amazed|surprise|happiest|spectacular|delighted|best thing|perfectly|laughed|cheer/.test(lc)){p=rnd(1.05,1.09);r*=1.02}
+  else if(/upset|lonely|homesick|exhausted|sadly|unfortunately|missed|disappointed|miss |sadness|goodbye/.test(lc)){p=rnd(.94,.97);r*=.96}
+  else if(/nervous|scared|afraid|worried|dangerous|dizzy|terrified|angry|furious|shaky|racing/.test(lc)){r*=1.02;p=rnd(1.02,1.05)}
+  if(/\?\s*$/.test(c))p=rnd(1.08,1.14);
+      out.push({t:c,r:Math.min(r,1.55),p,v,pause:(/[?!]\s*$/.test(c)?560:640)+rnd(-40,40)});
+ });
+ return out;
+};
+radioPlay=function(t,l,rate,my){
+ const s=window.speechSynthesis;loadV();const v=vFor(l||'en-US'),items=radioItems(t,rate);let i=0;_pend=1;
+ const next=()=>{if(my!==_tok)return;if(i>=items.length){_pend=0;showStop(false);return}
+  const it=items[i++],u=new SpeechSynthesisUtterance(it.t);u.lang=l||'en-US';u.rate=it.r;u.pitch=it.p;u.volume=it.v;if(v){u.voice=v;u.lang=String(v.lang).replace('_','-')}
+  const go=()=>setTimeout(next,it.pause||0);u.onend=go;u.onerror=go;try{s.speak(u)}catch(e){go()}};
+ setTimeout(()=>{if(my===_tok)next()},120);
+};
+hl=function(t){return t};
+glossBox=function(){return''};
+
+/* ===== HƯỚNG DẪN + 30 GIÂY CHUẨN BỊ TRƯỚC KHI NGHE (NÂNG CAO) ===== */
+let _pre=null;
+function cancelPre(){if(_pre){clearTimeout(_pre.t);clearInterval(_pre.iv);_pre=null}}
+function say1(text,cb){
+ let done=false;const fin=()=>{if(done)return;done=true;clearTimeout(tm);cb&&cb()};
+ const tm=setTimeout(fin,Math.max(5000,text.length*115));
+ try{const s=window.speechSynthesis;loadV();const u=new SpeechSynthesisUtterance(text),v=vFor('en-US');u.lang='en-US';u.rate=.92;u.volume=1;if(v){u.voice=v;u.lang=String(v.lang).replace('_','-')}u.onend=fin;u.onerror=fin;s.cancel();setTimeout(()=>{try{s.speak(u)}catch(e){fin()}},90)}catch(e){fin()}
+}
+const PRE_INTRO='This is the single Listening Test, you will hear the speaker and choose the best answer, please read the question carefully before start, you have 30 seconds.';
+function setPre(t){const d=document.getElementById('pre');if(d)d.innerHTML=t}
+function startPre(q){
+ cancelPre();q.phase='pre';q.chosen=null;
+ const h3=app.querySelector('h3');if(h3)h3.insertAdjacentHTML('afterend','<div id="pre" class="box" style="background:#eef3ff;border-color:#b9c7f5;text-align:center;font-weight:700"></div>');
+ const alive=()=>T&&T.list&&T.list[T.i]===q&&!q.sub;
+ _pre={q};setPre('🔊 Đang đọc hướng dẫn… Hãy đọc kỹ câu hỏi bên dưới.');
+ say1(PRE_INTRO,()=>{
+  if(!alive())return;let left=30;
+  const show=()=>setPre('⏳ Chuẩn bị: <span style="font-size:1.4rem">'+left+'</span> giây · Đọc kỹ câu hỏi'+(q.chosen?'<br><span class="muted">Đã chọn giọng '+(q.chosen==='en-GB'?'GB':'US')+' — sẽ phát khi hết giờ</span>':'<br><span class="muted">Bấm US hoặc GB để chọn giọng (mặc định US)</span>'));
+  q.show=show;show();
+  _pre.iv=setInterval(()=>{
+   if(!alive()){cancelPre();return}
+   left--;if(left>0){show();return}
+   clearInterval(_pre.iv);setPre('🔊 …');
+   say1('The test started.',()=>{
+    if(!alive())return;q.phase='live';q.show=null;setPre('▶ Bài nghe đang phát (còn tối đa '+Math.max(0,2-q.plays)+' lượt)');
+    playP(q.chosen||'en-US');
+   });
+  },1000);
+ });
+}
+const _pp2=playP;
+playP=function(lang){const q=T.list[T.i];
+ if(mode==='advanced'&&q&&q.t==='passage'&&q.kind==='listen'&&q.phase&&q.phase!=='live'){q.chosen=lang;if(q.show)q.show();return}
+ _pp2(lang)};
+const viewQ6=viewQ;
+viewQ=function(){viewQ6();const q=T.list[T.i];
+ if(_pre&&(!q||_pre.q!==q))cancelPre();
+ if(q&&q.part){const pl=app.querySelector('.pill');if(pl)pl.textContent=pl.textContent.replace(/ · (Nghe|Đọc|Viết|Nói)$/,' · '+q.part)}
+ if(mode==='advanced'&&q&&q.t==='passage'&&q.kind==='listen'&&!q.phase)startPre(q)};
+Object.defineProperty(KDESC,'all',{configurable:true,get(){return mode==='advanced'?'Bài tổng hợp <b>75 câu</b>: Nghe 35 câu (4 bài: 15 + 10 + 5 + 5), Đọc 36 câu (4 bài: 12 + 12 + 6 + 6), Nói 3 câu, Viết 1 câu. Mỗi bài nghe có 30 giây đọc câu hỏi trước khi phát.':'Bài tổng hợp <b>40 câu</b>: 19 câu đọc + 1 bài viết + 1 phần đọc to (3 mục ngẫu nhiên trong Unit đã chọn) + 19 câu nghe.'}});
+
+/* ===== BÀI NGHE NÂNG CAO: NGƯỜI NÓI KỂ LUÔN CẢ 4 ĐÁP ÁN, PHẢI NGHE KỸ MỚI BIẾT ĐÚNG ===== */
+function _rd(it,p,kind){
+ if(mode!=='advanced'||kind!=='listen'||!p.ordered)return it;
+ const sents=(String(p.text).match(/[^.!?]+[.!?]*/g)||[p.text]).map(x=>x.trim()).filter(Boolean),sets=sents.map(x=>new Set(tokW(x)));
+ const cand=[];
+ it.qs.forEach(q=>{if(q.k!=='mc')return;
+  const words=q.opts.reduce((a,o)=>a+o.split(' ').length,0);if(words>36)return;
+  const key=tokW(q.text+' '+q.opts[q.ok]);let best=0,bi=-1;
+  sets.forEach((st,j)=>{let n=0;key.forEach(w=>{if(st.has(w))n++});if(n>best){best=n;bi=j}});
+  if(bi>=0)cand.push({bi,q})});
+ const used=new Set(),pick=[];
+ sh(cand).forEach(c=>{if(pick.length<5&&!used.has(c.bi)){used.add(c.bi);pick.push(c)}});
+ const NAMES=['Dad','Mum','Linh','Nam','Mai','Tuan','my brother','the guide','Grandma','the driver'];
+ const cl=s=>{s=String(s).replace(/[.!?]+$/,'').trim();return /^I\b/.test(s)?s:s[0].toLowerCase()+s.slice(1)};
+ const asides={};
+ pick.forEach(c=>{
+  const o=sh(c.q.opts.map(cl)),f=Math.floor(Math.random()*3);let t;
+  if(f===0)t='We argued about it for a while. Maybe '+o[0]+', maybe '+o[1]+', or '+o[2]+', or even '+o[3]+', nobody was really sure.';
+  else if(f===1)t='At first I thought '+o[0]+', then '+o[1]+', then '+o[2]+', and for a moment even '+o[3]+'.';
+  else t='I kept going back and forth. Was it '+o[0]+', or '+o[1]+', or '+o[2]+', or '+o[3]+'? It took me a while to decide.';
+  asides[c.bi]=t});
+ it.p.text=sents.map((s,j)=>asides[j]?s+' '+asides[j]:s).join(' ');
+ return it;
+}
+
+/* ===== NHIỀU GIỌNG: CHA, MẸ, BÀ, BẠN BÈ… ===== */
+const ROLES={'dad':{g:'m',p:.8,r:.95},'mum':{g:'f',p:1.1,r:1},'grandma':{g:'f',p:.95,r:.86},'linh':{g:'f',p:1.2,r:1.05},'mai':{g:'f',p:1.28,r:1.05},'nam':{g:'m',p:1.0,r:1.05},'tuan':{g:'m',p:.9,r:1},'my brother':{g:'m',p:1.15,r:1.1},'the guide':{g:'m',p:.85,r:.95},'the driver':{g:'m',p:.75,r:.9}};
+const RX_SAY=/^\b\B$/;
+const MALE_RX=/daniel|oliver|arthur|ryan|george|brian|alex|evan|aaron|guy|matthew|david|mark|james|thomas|tom\b|\bmale|gbb|gbd/i,FEMALE_RX=/kate|serena|sonia|libby|amy|stephanie|samantha|ava|allison|zoe|jenny|aria|nicky|joanna|susan|karen|female|gba|gbc|tpf|sfg/i;
+const _vg={};
+function vGender(lang,g){const key=lang+g;if(key in _vg&&_vg[key]!==undefined)return _vg[key];
+ const L=String(lang).toLowerCase(),rx=g==='m'?MALE_RX:FEMALE_RX,bad=g==='m'?FEMALE_RX:MALE_RX;
+ let c=(_voices||[]).filter(v=>String(v.lang).toLowerCase().replace('_','-')===L&&rx.test(v.name)&&!(bad.test(v.name)&&!rx.test(v.name)));
+ let best=null,bs=-99;c.forEach(v=>{const s=vScore(v,lang);if(s>bs){bs=s;best=v}});
+ if(_voices&&_voices.length)_vg[key]=best;return best}
+const _ri0=radioItems;
+radioItems=function(text,rate){
+ const out=[];
+ _ri0(text,rate).forEach(it=>{const m=RX_SAY.exec(it.t);
+  if(m){const nm=m[1].toLowerCase();let rest=m[2].trim();
+   out.push({t:m[1].replace(/^./,c=>c.toUpperCase())+' says,',r:it.r,p:it.p,v:it.v,pause:150});
+   out.push({t:rest,r:it.r,p:it.p,v:it.v,pause:it.pause,role:nm})}
+  else out.push(it)});
+ return out};
+radioPlay=function(t,l,rate,my){
+ const s=window.speechSynthesis;loadV();const lang=l||'en-US',base=vFor(lang),items=radioItems(t,rate);let i=_startAt||0;_startAt=0;_pend=1;_ract=true;
+ const next=()=>{if(my!==_tok)return;if(i>=items.length){_pend=0;_ract=false;_rq=null;showStop(false);return}
+  _rpos=i;const it=items[i++],u=new SpeechSynthesisUtterance(it.t),R=it.role?ROLES[it.role]:null;
+  let v=base;if(R){const gv=vGender(lang,R.g);if(gv)v=gv}
+  u.lang=lang;u.rate=Math.min(it.r*(R?R.r:1),2);u.pitch=Math.max(.3,Math.min(it.p*(R?R.p:1),2));u.volume=it.v;
+  if(v){u.voice=v;u.lang=String(v.lang).replace('_','-')}
+  const go=()=>setTimeout(next,it.pause||0);u.onend=go;u.onerror=go;try{s.speak(u)}catch(e){go()}};
+ _rq=(typeof T!=='undefined'&&T&&T.list)?T.list[T.i]:null;setTimeout(()=>{if(my===_tok)next()},120);
+};
+
+var _ract=false,_rpos=0,_rq=null,_startAt=0;
+const _sp9=stopSpeak;
+stopSpeak=function(){const q=_rq;if(_ract&&q&&q.phase==='live'){q.resume={at:Math.max(0,_rpos),lang:null};}_ract=false;_sp9()};
+const _pp9=playP;
+playP=function(lang){const q=T.list[T.i];
+ if(mode==='advanced'&&q&&q.t==='passage'&&q.kind==='listen'&&q.phase==='live'&&q.resume&&document.getElementById('pl')){const r=q.resume;q.resume=null;_startAt=r.at;_radio=true;killFx();speak(q.p.text,lang);return}
+ _pp9(lang)};
+
+/* ===== RỜI CÂU/RỜI TRANG: tạm dừng, quay lại thì nghe tiếp, không mất lượt ===== */
+var _rlang='en-US';
+const _pp10=playP;
+playP=function(lang){_rlang=lang||_rlang;_pp10(lang)};
+const _vq10=viewQ;
+viewQ=function(){
+ const prev=_rq;
+ if(_ract){stopSpeak()}
+ _vq10();
+ const q=T&&T.list&&T.list[T.i];
+ if(q&&q.resume&&q.phase==='live'&&mode==='advanced'&&q.t==='passage'){const d=document.getElementById('pre');if(d)d.innerHTML='⏸ Đã tạm dừng — bấm US/GB để nghe tiếp'}
+};
+document.addEventListener('visibilitychange',function(){
+ try{
+  if(document.hidden){if(_ract)stopSpeak();return}
+  const q=T&&T.list&&T.list[T.i];
+  if(document.getElementById('pl')&&mode==='advanced'&&q&&q.t==='passage'&&q.kind==='listen'&&q.phase==='live'&&q.resume&&!q.sub)setTimeout(()=>{if(q.resume&&T.list[T.i]===q&&document.getElementById('pl'))playP(_rlang)},300)
+ }catch(e){}
+});
+
+const _sn11=sayNow;sayNow=function(t,l,r){if(!_radio)_startAt=0;return _sn11(t,l,r)};
 </script>
 </body></html>
